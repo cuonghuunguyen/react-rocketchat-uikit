@@ -163,8 +163,11 @@ const hostConfig: ReactReconciler.HostConfig<
 
   // ── React 19 transition context ──────────────────────────────────────────────
   NotPendingTransition: null,
-  // React.Context<null> is structurally compatible with ReactContext<TransitionStatus>.
-  // The cast is necessary because TypeScript's opaque generic prevents direct assignment.
+  // React.Context<null> is structurally identical to ReactContext<TransitionStatus>
+  // at runtime — both are plain objects with the same internal fields.
+  // The `as any` cast is the minimal workaround for the opaque generic mismatch
+  // between `@types/react` (Context<T>) and `@types/react-reconciler`
+  // (ReactContext<T>); no runtime risk, purely a TypeScript limitation.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   HostTransitionContext: HostTransitionContext as any,
 };
