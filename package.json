@@ -2,15 +2,39 @@
   "name": "react-rocketchat-uikit",
   "version": "0.1.0",
   "description": "React reconciler for building Rocket.Chat Apps UI Kit blocks",
+  "license": "MIT",
+  "author": "Cuong Huu Nguyen <CuongHuuNguyen98@gmail.com>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cuonghuunguyen/react-rocketchat-uikit.git"
+  },
+  "keywords": [
+    "rocketchat",
+    "uikit",
+    "react",
+    "reconciler",
+    "blocks",
+    "jsx"
+  ],
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
   "files": [
     "dist"
   ],
+  "sideEffects": false,
   "scripts": {
     "build": "tsc --project tsconfig.build.json",
     "typecheck": "tsc --noEmit",
     "test": "jest"
+  },
+  "engines": {
+    "node": ">=18"
   },
   "dependencies": {
     "jest-util": "^30.4.1",
