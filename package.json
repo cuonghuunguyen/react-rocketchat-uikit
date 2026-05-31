@@ -1,6 +1,6 @@
 {
   "name": "react-rocketchat-uikit",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "React reconciler for building Rocket.Chat Apps UI Kit blocks",
   "license": "MIT",
   "author": "Cuong Huu Nguyen <CuongHuuNguyen98@gmail.com>",
@@ -44,7 +44,7 @@
   "devDependencies": {
     "@types/jest": "^29.5.14",
     "@types/react": "^19.0.0",
-    "@types/react-reconciler": "^0.28.0",
+    "@types/react-reconciler": "^0.33.0",
     "jest": "^29.0.0",
     "ts-jest": "^29.0.0",
     "typescript": "^5.0.0"
