@@ -93,18 +93,18 @@ const hostConfig: ReactReconciler.HostConfig<
     instance.props = rest;
   },
 
-  commitTextUpdate(textInstance, _prevText, nextText) {
+  commitTextUpdate(textInstance: TextInstance, _prevText: string, nextText: string) {
     textInstance.text = nextText;
   },
 
-  resetTextContent(_instance) {
+  resetTextContent(_instance: Instance) {
     // No-op: we don't track text content directly on instances.
   },
 
   // ── Finalisation & context ───────────────────────────────────────────────────
   finalizeInitialChildren: () => false,
 
-  getPublicInstance(instance) {
+  getPublicInstance(instance: Instance | TextInstance) {
     if (instance.nodeType === 'text') {
       return instance as unknown as Instance;
     }
@@ -115,7 +115,7 @@ const hostConfig: ReactReconciler.HostConfig<
   resetAfterCommit: () => undefined,
 
   getRootHostContext: () => ({}),
-  getChildHostContext: (_parentHostContext) => ({}),
+  getChildHostContext: (_parentHostContext: unknown) => ({}),
 
   shouldSetTextContent: () => false,
 
@@ -138,7 +138,7 @@ const hostConfig: ReactReconciler.HostConfig<
   warnsIfNotActing: false,
 
   // ── React 19 event priority ──────────────────────────────────────────────────
-  setCurrentUpdatePriority(newPriority) {
+  setCurrentUpdatePriority(newPriority: number) {
     currentEventPriority = newPriority;
   },
   getCurrentUpdatePriority: () => currentEventPriority,

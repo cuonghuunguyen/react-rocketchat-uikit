@@ -17,9 +17,19 @@ function el<P>(type: string, props: P) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 interface ActionableProps {
-  actionId: string;
-  appId: string;
-  blockId: string;
+  /**
+   * Unique identifier for this interactive element's action.
+   * If omitted, an auto-generated ID based on the element's index will be used.
+   */
+  actionId?: string;
+  /**
+   * The app that owns this element. If omitted, inherits from the parent block's `appId`.
+   */
+  appId?: string;
+  /**
+   * The block this element belongs to. If omitted, inherits from the parent block's `blockId`.
+   */
+  blockId?: string;
   confirm?: ConfirmationDialog;
   dispatchActionConfig?: readonly InputElementDispatchAction[];
 }

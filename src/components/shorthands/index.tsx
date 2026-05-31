@@ -18,9 +18,9 @@ import { Plain } from '../text';
 // ─────────────────────────────────────────────────────────────────────────────
 
 interface ActionableProps {
-  actionId: string;
-  appId: string;
-  blockId: string;
+  actionId?: string;
+  appId?: string;
+  blockId?: string;
   confirm?: ConfirmationDialog;
   dispatchActionConfig?: readonly InputElementDispatchAction[];
 }
