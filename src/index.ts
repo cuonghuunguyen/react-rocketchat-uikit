@@ -50,6 +50,19 @@ export {
 // Text helper components
 export { Mrkdwn, Plain } from './components/text';
 
+// Shorthand components — reduce boilerplate for single-element blocks
+export {
+  ActionButton,
+  ContextImage,
+  ContextMrkdwn,
+  ContextPlain,
+  InputDatePicker,
+  InputStaticSelect,
+  InputTextInput,
+  SectionButton,
+  SectionOverflow,
+} from './components/shorthands';
+
 // Types — note: ImageElement and InfoCardRow are also exported as components
 // above. Import their block-type counterparts using a named alias when both
 // are needed in the same file.
@@ -152,3 +165,15 @@ export type {
 } from './components/elements';
 
 export type { MrkdwnProps, PlainProps } from './components/text';
+
+export type {
+  ActionButtonProps,
+  ContextImageProps,
+  ContextMrkdwnProps,
+  ContextPlainProps,
+  InputDatePickerProps,
+  InputStaticSelectProps,
+  InputTextInputProps,
+  SectionButtonProps,
+  SectionOverflowProps,
+} from './components/shorthands';
