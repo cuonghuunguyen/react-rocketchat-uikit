@@ -130,6 +130,54 @@ A video-conference block (only valid in Message surfaces).
 <VideoConference callId="call-123" title="Team Standup" blockId="vc1" />
 ```
 
+#### `<InfoCard>`
+
+A card block composed of one or more `<InfoCardRow>` children.
+
+```tsx
+<InfoCard>
+  <InfoCardRow background="default">
+    <Mrkdwn text="*Label:* value" />
+  </InfoCardRow>
+  <InfoCardRow background="secondary">
+    <Plain text="Another row" />
+    <IconButton appId="app" blockId="b1" actionId="edit">✏️</IconButton>
+  </InfoCardRow>
+</InfoCard>
+```
+
+#### `<InfoCardRow>`
+
+A single row inside an `<InfoCard>`. Accepts `<Mrkdwn>`, `<Plain>`, or `<ImageElement>` children, plus an optional `<IconButton>` which becomes the row action.
+
+| Prop | Type | Description |
+|------|------|-------------|
+| `background` | `'default' \| 'secondary'` | Row background style |
+
+#### `<Conditional>`
+
+Conditionally renders its child blocks depending on the hosting engine. This is the only block that can contain other layout blocks directly.
+
+```tsx
+<Conditional engine={['rocket.chat']}>
+  <Section text="Only shown in Rocket.Chat" />
+</Conditional>
+```
+
+#### `<TabNavigation>`
+
+A tab-navigation bar containing one or more `<Tab>` elements.
+
+> **Experimental** — this block type may change in future versions.
+
+```tsx
+<TabNavigation>
+  <Tab appId="app" blockId="b1" actionId="tab1" title="Overview" selected />
+  <Tab appId="app" blockId="b1" actionId="tab2" title="Details" />
+  <Tab appId="app" blockId="b1" actionId="tab3" title="Settings" disabled />
+</TabNavigation>
+```
+
 ### Interactive Elements
 
 #### `<Button>`
@@ -161,6 +209,12 @@ A video-conference block (only valid in Message surfaces).
 <ChannelsSelect appId="app" blockId="b1" actionId="channel" placeholder="Select channel" />
 ```
 
+#### `<ConversationsSelect>` / `<MultiConversationsSelect>`
+
+```tsx
+<ConversationsSelect appId="app" blockId="b1" actionId="conv" placeholder="Select conversation" />
+```
+
 #### `<DatePicker>` / `<TimePicker>`
 
 ```tsx
@@ -190,6 +244,32 @@ A video-conference block (only valid in Message surfaces).
   <Option value="a">Option A</Option>
   <Option value="b">Option B</Option>
 </CheckboxGroup>
+```
+
+#### `<ImageElement>`
+
+An inline image for use inside `<Section>` (as accessory) or `<Context>`. This is **not** the standalone `<Image>` block.
+
+```tsx
+<ImageElement imageUrl="https://example.com/icon.png" altText="icon" />
+```
+
+#### `<IconButton>`
+
+An icon-only button used as the action inside an `<InfoCardRow>`.
+
+```tsx
+<IconButton appId="app" blockId="b1" actionId="edit" style="primary">✏️</IconButton>
+```
+
+#### `<Tab>`
+
+A single tab for use inside `<TabNavigation>`.
+
+> **Experimental** — this element type may change in future versions.
+
+```tsx
+<Tab appId="app" blockId="b1" actionId="tab1" title="Overview" selected />
 ```
 
 #### `<ToggleSwitch>`
@@ -410,6 +490,17 @@ const blocks = render(
 ### `render(element: ReactElement): LayoutBlock[]`
 
 Renders JSX elements into Rocket.Chat UiKit block JSON. Accepts a single element or a fragment containing multiple blocks.
+
+### `resetActionIdCounter(): void`
+
+Resets the internal auto-increment counter used when `actionId` is omitted from an element. Call this between independent renders (e.g., in tests) to ensure deterministic IDs.
+
+```ts
+import { render, resetActionIdCounter, ActionButton } from 'react-rocketchat-uikit';
+
+resetActionIdCounter();
+const blocks = render(<ActionButton appId="app" blockId="b1">Click</ActionButton>);
+```
 
 ## License
 
