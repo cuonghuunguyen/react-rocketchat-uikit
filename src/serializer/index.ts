@@ -116,14 +116,46 @@ function serializeOption(inst: Instance): OptionObject {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Block context — carries parent block's appId/blockId for inheritance
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface BlockContext {
+  appId?: string;
+  blockId?: string;
+}
+
+/** Counter used to auto-generate actionIds when not provided. */
+let actionIdCounter = 0;
+
+/** Reset the auto-generated actionId counter (useful for deterministic tests). */
+export function resetActionIdCounter(): void {
+  actionIdCounter = 0;
+}
+
+/**
+ * Resolve the actionable fields (actionId, appId, blockId) for an element,
+ * falling back to parent block context and auto-generation.
+ */
+function resolveActionable(
+  props: { actionId?: string; appId?: string; blockId?: string },
+  ctx: BlockContext,
+): { actionId: string; appId: string; blockId: string } {
+  return {
+    actionId: props.actionId ?? `action_${actionIdCounter++}`,
+    appId: props.appId ?? ctx.appId ?? '',
+    blockId: props.blockId ?? ctx.blockId ?? '',
+  };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Element serializers
 // ─────────────────────────────────────────────────────────────────────────────
 
-function serializeButton(inst: Instance): ButtonElement {
+function serializeButton(inst: Instance, ctx: BlockContext = {}): ButtonElement {
   const p = inst.props as {
-    actionId: string;
-    appId: string;
-    blockId: string;
+    actionId?: string;
+    appId?: string;
+    blockId?: string;
     style?: 'primary' | 'danger';
     url?: string;
     value?: string;
@@ -131,11 +163,12 @@ function serializeButton(inst: Instance): ButtonElement {
     confirm?: unknown;
   };
   const textContent = childrenToText(inst.children);
+  const { actionId, appId, blockId } = resolveActionable(p, ctx);
   return {
     type: 'button',
-    actionId: p.actionId,
-    appId: p.appId,
-    blockId: p.blockId,
+    actionId,
+    appId,
+    blockId,
     text: { type: 'plain_text', text: textContent },
     ...(p.style !== undefined ? { style: p.style } : {}),
     ...(p.url !== undefined ? { url: p.url } : {}),
@@ -147,20 +180,21 @@ function serializeButton(inst: Instance): ButtonElement {
   };
 }
 
-function serializeIconButton(inst: Instance): IconButtonElement {
+function serializeIconButton(inst: Instance, ctx: BlockContext = {}): IconButtonElement {
   const p = inst.props as {
-    actionId: string;
-    appId: string;
-    blockId: string;
+    actionId?: string;
+    appId?: string;
+    blockId?: string;
     style?: 'primary' | 'danger' | 'warning' | 'success';
     confirm?: unknown;
   };
   const iconText = childrenToText(inst.children);
+  const { actionId, appId, blockId } = resolveActionable(p, ctx);
   return {
     type: 'icon_button',
-    actionId: p.actionId,
-    appId: p.appId,
-    blockId: p.blockId,
+    actionId,
+    appId,
+    blockId,
     icon: { type: 'plain_text', text: iconText },
     ...(p.style !== undefined ? { style: p.style } : {}),
     ...(p.confirm !== undefined
@@ -175,34 +209,36 @@ function serializeOptions(children: Array<Instance | TextInstance>): OptionObjec
     .map(serializeOption);
 }
 
-function serializeStaticSelect(inst: Instance): StaticSelectElement {
+function serializeStaticSelect(inst: Instance, ctx: BlockContext = {}): StaticSelectElement {
   const p = inst.props as {
-    actionId: string; appId: string; blockId: string;
+    actionId?: string; appId?: string; blockId?: string;
     placeholder?: string | TextObject;
     initialOption?: string;
     confirm?: unknown;
   };
   const options = serializeOptions(inst.children);
+  const { actionId, appId, blockId } = resolveActionable(p, ctx);
   return {
     type: 'static_select',
-    actionId: p.actionId, appId: p.appId, blockId: p.blockId,
+    actionId, appId, blockId,
     options,
     ...(p.placeholder !== undefined ? { placeholder: toPlainText(p.placeholder) } : {}),
     ...(p.confirm !== undefined ? { confirm: p.confirm as StaticSelectElement['confirm'] } : {}),
   };
 }
 
-function serializeMultiStaticSelect(inst: Instance): MultiStaticSelectElement {
+function serializeMultiStaticSelect(inst: Instance, ctx: BlockContext = {}): MultiStaticSelectElement {
   const p = inst.props as {
-    actionId: string; appId: string; blockId: string;
+    actionId?: string; appId?: string; blockId?: string;
     placeholder?: string | TextObject;
     maxSelectItems?: number;
     confirm?: unknown;
   };
   const options = serializeOptions(inst.children);
+  const { actionId, appId, blockId } = resolveActionable(p, ctx);
   return {
     type: 'multi_static_select',
-    actionId: p.actionId, appId: p.appId, blockId: p.blockId,
+    actionId, appId, blockId,
     options,
     ...(p.placeholder !== undefined ? { placeholder: toPlainText(p.placeholder) } : {}),
     ...(p.maxSelectItems !== undefined ? { maxSelectItems: p.maxSelectItems } : {}),
@@ -210,71 +246,76 @@ function serializeMultiStaticSelect(inst: Instance): MultiStaticSelectElement {
   };
 }
 
-function serializeUsersSelect(inst: Instance): UsersSelectElement {
+function serializeUsersSelect(inst: Instance, ctx: BlockContext = {}): UsersSelectElement {
   const p = inst.props as {
-    actionId: string; appId: string; blockId: string;
+    actionId?: string; appId?: string; blockId?: string;
     placeholder?: string | TextObject; initialUser?: string; confirm?: unknown;
   };
+  const { actionId, appId, blockId } = resolveActionable(p, ctx);
   return {
     type: 'users_select',
-    actionId: p.actionId, appId: p.appId, blockId: p.blockId,
+    actionId, appId, blockId,
     ...(p.placeholder !== undefined ? { placeholder: toPlainText(p.placeholder) } : {}),
     ...(p.initialUser !== undefined ? { initialUser: p.initialUser } : {}),
     ...(p.confirm !== undefined ? { confirm: p.confirm as UsersSelectElement['confirm'] } : {}),
   };
 }
 
-function serializeMultiUsersSelect(inst: Instance): MultiUsersSelectElement {
+function serializeMultiUsersSelect(inst: Instance, ctx: BlockContext = {}): MultiUsersSelectElement {
   const p = inst.props as {
-    actionId: string; appId: string; blockId: string;
+    actionId?: string; appId?: string; blockId?: string;
     placeholder?: string | TextObject; maxSelectItems?: number; confirm?: unknown;
   };
+  const { actionId, appId, blockId } = resolveActionable(p, ctx);
   return {
     type: 'multi_users_select',
-    actionId: p.actionId, appId: p.appId, blockId: p.blockId,
+    actionId, appId, blockId,
     ...(p.placeholder !== undefined ? { placeholder: toPlainText(p.placeholder) } : {}),
     ...(p.maxSelectItems !== undefined ? { maxSelectItems: p.maxSelectItems } : {}),
     ...(p.confirm !== undefined ? { confirm: p.confirm as MultiUsersSelectElement['confirm'] } : {}),
   };
 }
 
-function serializeChannelsSelect(inst: Instance): ChannelsSelectElement {
+function serializeChannelsSelect(inst: Instance, ctx: BlockContext = {}): ChannelsSelectElement {
   const p = inst.props as {
-    actionId: string; appId: string; blockId: string;
+    actionId?: string; appId?: string; blockId?: string;
     placeholder?: string | TextObject; initialChannel?: string; confirm?: unknown;
   };
+  const { actionId, appId, blockId } = resolveActionable(p, ctx);
   return {
     type: 'channels_select',
-    actionId: p.actionId, appId: p.appId, blockId: p.blockId,
+    actionId, appId, blockId,
     ...(p.placeholder !== undefined ? { placeholder: toPlainText(p.placeholder) } : {}),
     ...(p.initialChannel !== undefined ? { initialChannel: p.initialChannel } : {}),
     ...(p.confirm !== undefined ? { confirm: p.confirm as ChannelsSelectElement['confirm'] } : {}),
   };
 }
 
-function serializeMultiChannelsSelect(inst: Instance): MultiChannelsSelectElement {
+function serializeMultiChannelsSelect(inst: Instance, ctx: BlockContext = {}): MultiChannelsSelectElement {
   const p = inst.props as {
-    actionId: string; appId: string; blockId: string;
+    actionId?: string; appId?: string; blockId?: string;
     placeholder?: string | TextObject; maxSelectItems?: number; confirm?: unknown;
   };
+  const { actionId, appId, blockId } = resolveActionable(p, ctx);
   return {
     type: 'multi_channels_select',
-    actionId: p.actionId, appId: p.appId, blockId: p.blockId,
+    actionId, appId, blockId,
     ...(p.placeholder !== undefined ? { placeholder: toPlainText(p.placeholder) } : {}),
     ...(p.maxSelectItems !== undefined ? { maxSelectItems: p.maxSelectItems } : {}),
     ...(p.confirm !== undefined ? { confirm: p.confirm as MultiChannelsSelectElement['confirm'] } : {}),
   };
 }
 
-function serializeConversationsSelect(inst: Instance): ConversationsSelectElement {
+function serializeConversationsSelect(inst: Instance, ctx: BlockContext = {}): ConversationsSelectElement {
   const p = inst.props as {
-    actionId: string; appId: string; blockId: string;
+    actionId?: string; appId?: string; blockId?: string;
     placeholder?: string | TextObject; initialConversation?: string;
     filter?: ConversationsSelectElement['filter']; confirm?: unknown;
   };
+  const { actionId, appId, blockId } = resolveActionable(p, ctx);
   return {
     type: 'conversations_select',
-    actionId: p.actionId, appId: p.appId, blockId: p.blockId,
+    actionId, appId, blockId,
     ...(p.placeholder !== undefined ? { placeholder: toPlainText(p.placeholder) } : {}),
     ...(p.initialConversation !== undefined ? { initialConversation: p.initialConversation } : {}),
     ...(p.filter !== undefined ? { filter: p.filter } : {}),
@@ -282,70 +323,75 @@ function serializeConversationsSelect(inst: Instance): ConversationsSelectElemen
   };
 }
 
-function serializeMultiConversationsSelect(inst: Instance): MultiConversationsSelectElement {
+function serializeMultiConversationsSelect(inst: Instance, ctx: BlockContext = {}): MultiConversationsSelectElement {
   const p = inst.props as {
-    actionId: string; appId: string; blockId: string;
+    actionId?: string; appId?: string; blockId?: string;
     placeholder?: string | TextObject; maxSelectItems?: number; confirm?: unknown;
   };
+  const { actionId, appId, blockId } = resolveActionable(p, ctx);
   return {
     type: 'multi_conversations_select',
-    actionId: p.actionId, appId: p.appId, blockId: p.blockId,
+    actionId, appId, blockId,
     ...(p.placeholder !== undefined ? { placeholder: toPlainText(p.placeholder) } : {}),
     ...(p.maxSelectItems !== undefined ? { maxSelectItems: p.maxSelectItems } : {}),
     ...(p.confirm !== undefined ? { confirm: p.confirm as MultiConversationsSelectElement['confirm'] } : {}),
   };
 }
 
-function serializeOverflow(inst: Instance): OverflowElement {
+function serializeOverflow(inst: Instance, ctx: BlockContext = {}): OverflowElement {
   const p = inst.props as {
-    actionId: string; appId: string; blockId: string; confirm?: unknown;
+    actionId?: string; appId?: string; blockId?: string; confirm?: unknown;
   };
   const options = serializeOptions(inst.children);
+  const { actionId, appId, blockId } = resolveActionable(p, ctx);
   return {
     type: 'overflow',
-    actionId: p.actionId, appId: p.appId, blockId: p.blockId,
+    actionId, appId, blockId,
     options,
     ...(p.confirm !== undefined ? { confirm: p.confirm as OverflowElement['confirm'] } : {}),
   };
 }
 
-function serializeDatePicker(inst: Instance): DatePickerElement {
+function serializeDatePicker(inst: Instance, ctx: BlockContext = {}): DatePickerElement {
   const p = inst.props as {
-    actionId: string; appId: string; blockId: string;
+    actionId?: string; appId?: string; blockId?: string;
     placeholder?: string | TextObject; initialDate?: string; confirm?: unknown;
   };
+  const { actionId, appId, blockId } = resolveActionable(p, ctx);
   return {
     type: 'datepicker',
-    actionId: p.actionId, appId: p.appId, blockId: p.blockId,
+    actionId, appId, blockId,
     ...(p.placeholder !== undefined ? { placeholder: toPlainText(p.placeholder) } : {}),
     ...(p.initialDate !== undefined ? { initialDate: p.initialDate } : {}),
     ...(p.confirm !== undefined ? { confirm: p.confirm as DatePickerElement['confirm'] } : {}),
   };
 }
 
-function serializeTimePicker(inst: Instance): TimePickerElement {
+function serializeTimePicker(inst: Instance, ctx: BlockContext = {}): TimePickerElement {
   const p = inst.props as {
-    actionId: string; appId: string; blockId: string;
+    actionId?: string; appId?: string; blockId?: string;
     placeholder?: string | TextObject; initialTime?: string; confirm?: unknown;
   };
+  const { actionId, appId, blockId } = resolveActionable(p, ctx);
   return {
     type: 'timepicker',
-    actionId: p.actionId, appId: p.appId, blockId: p.blockId,
+    actionId, appId, blockId,
     ...(p.placeholder !== undefined ? { placeholder: toPlainText(p.placeholder) } : {}),
     ...(p.initialTime !== undefined ? { initialTime: p.initialTime } : {}),
     ...(p.confirm !== undefined ? { confirm: p.confirm as TimePickerElement['confirm'] } : {}),
   };
 }
 
-function serializeLinearScale(inst: Instance): LinearScaleElement {
+function serializeLinearScale(inst: Instance, ctx: BlockContext = {}): LinearScaleElement {
   const p = inst.props as {
-    actionId: string; appId: string; blockId: string;
+    actionId?: string; appId?: string; blockId?: string;
     minValue?: number; maxValue?: number; initialValue?: number;
     label?: string | TextObject; confirm?: unknown;
   };
+  const { actionId, appId, blockId } = resolveActionable(p, ctx);
   return {
     type: 'linear_scale',
-    actionId: p.actionId, appId: p.appId, blockId: p.blockId,
+    actionId, appId, blockId,
     ...(p.minValue !== undefined ? { minValue: p.minValue } : {}),
     ...(p.maxValue !== undefined ? { maxValue: p.maxValue } : {}),
     ...(p.initialValue !== undefined ? { initialValue: p.initialValue } : {}),
@@ -354,55 +400,59 @@ function serializeLinearScale(inst: Instance): LinearScaleElement {
   };
 }
 
-function serializeToggleSwitch(inst: Instance): ToggleSwitchElement {
+function serializeToggleSwitch(inst: Instance, ctx: BlockContext = {}): ToggleSwitchElement {
   const p = inst.props as {
-    actionId: string; appId: string; blockId: string;
+    actionId?: string; appId?: string; blockId?: string;
     text: string | TextObject; checked?: boolean; confirm?: unknown;
   };
+  const { actionId, appId, blockId } = resolveActionable(p, ctx);
   return {
     type: 'toggle_switch',
-    actionId: p.actionId, appId: p.appId, blockId: p.blockId,
+    actionId, appId, blockId,
     text: toPlainText(p.text),
     ...(p.checked !== undefined ? { checked: p.checked } : {}),
     ...(p.confirm !== undefined ? { confirm: p.confirm as ToggleSwitchElement['confirm'] } : {}),
   };
 }
 
-function serializeCheckboxGroup(inst: Instance): CheckboxElement {
+function serializeCheckboxGroup(inst: Instance, ctx: BlockContext = {}): CheckboxElement {
   const p = inst.props as {
-    actionId: string; appId: string; blockId: string; confirm?: unknown;
+    actionId?: string; appId?: string; blockId?: string; confirm?: unknown;
   };
   const options = serializeOptions(inst.children);
+  const { actionId, appId, blockId } = resolveActionable(p, ctx);
   return {
     type: 'checkboxes',
-    actionId: p.actionId, appId: p.appId, blockId: p.blockId,
+    actionId, appId, blockId,
     options,
     ...(p.confirm !== undefined ? { confirm: p.confirm as CheckboxElement['confirm'] } : {}),
   };
 }
 
-function serializeRadioButtonGroup(inst: Instance): RadioButtonElement {
+function serializeRadioButtonGroup(inst: Instance, ctx: BlockContext = {}): RadioButtonElement {
   const p = inst.props as {
-    actionId: string; appId: string; blockId: string; confirm?: unknown;
+    actionId?: string; appId?: string; blockId?: string; confirm?: unknown;
   };
   const options = serializeOptions(inst.children);
+  const { actionId, appId, blockId } = resolveActionable(p, ctx);
   return {
     type: 'radio_buttons',
-    actionId: p.actionId, appId: p.appId, blockId: p.blockId,
+    actionId, appId, blockId,
     options,
     ...(p.confirm !== undefined ? { confirm: p.confirm as RadioButtonElement['confirm'] } : {}),
   };
 }
 
-function serializePlainTextInput(inst: Instance): PlainTextInputElement {
+function serializePlainTextInput(inst: Instance, ctx: BlockContext = {}): PlainTextInputElement {
   const p = inst.props as {
-    actionId: string; appId: string; blockId: string;
+    actionId?: string; appId?: string; blockId?: string;
     placeholder?: string | TextObject; initialValue?: string;
     multiline?: boolean; minLength?: number; maxLength?: number; confirm?: unknown;
   };
+  const { actionId, appId, blockId } = resolveActionable(p, ctx);
   return {
     type: 'plain_text_input',
-    actionId: p.actionId, appId: p.appId, blockId: p.blockId,
+    actionId, appId, blockId,
     ...(p.placeholder !== undefined ? { placeholder: toPlainText(p.placeholder) } : {}),
     ...(p.initialValue !== undefined ? { initialValue: p.initialValue } : {}),
     ...(p.multiline !== undefined ? { multiline: p.multiline } : {}),
@@ -417,14 +467,15 @@ function serializeImageElement(inst: Instance): ImageElement {
   return { type: 'image', imageUrl: p.imageUrl, altText: p.altText };
 }
 
-function serializeTab(inst: Instance): ExperimentalTabElement {
+function serializeTab(inst: Instance, ctx: BlockContext = {}): ExperimentalTabElement {
   const p = inst.props as {
-    actionId: string; appId: string; blockId: string;
+    actionId?: string; appId?: string; blockId?: string;
     title: string | TextObject; disabled?: boolean; selected?: boolean;
   };
+  const { actionId, appId, blockId } = resolveActionable(p, ctx);
   return {
     type: 'tab',
-    actionId: p.actionId, appId: p.appId, blockId: p.blockId,
+    actionId, appId, blockId,
     title: toTextObject(p.title),
     ...(p.disabled !== undefined ? { disabled: p.disabled } : {}),
     ...(p.selected !== undefined ? { selected: p.selected } : {}),
@@ -460,24 +511,24 @@ function serializeContextElement(child: Instance | TextInstance): ContextElement
 // Actions-element serializer
 // ─────────────────────────────────────────────────────────────────────────────
 
-function serializeActionsElement(inst: Instance): ActionsElement | null {
+function serializeActionsElement(inst: Instance, ctx: BlockContext = {}): ActionsElement | null {
   switch (inst.type) {
-    case 'button':              return serializeButton(inst);
-    case 'static_select':      return serializeStaticSelect(inst);
-    case 'multi_static_select': return serializeMultiStaticSelect(inst);
-    case 'users_select':       return serializeUsersSelect(inst);
-    case 'multi_users_select': return serializeMultiUsersSelect(inst);
-    case 'channels_select':    return serializeChannelsSelect(inst);
-    case 'multi_channels_select': return serializeMultiChannelsSelect(inst);
-    case 'conversations_select': return serializeConversationsSelect(inst);
-    case 'multi_conversations_select': return serializeMultiConversationsSelect(inst);
-    case 'overflow':           return serializeOverflow(inst);
-    case 'datepicker':         return serializeDatePicker(inst);
-    case 'timepicker':         return serializeTimePicker(inst);
-    case 'linear_scale':       return serializeLinearScale(inst);
-    case 'toggle_switch':      return serializeToggleSwitch(inst);
-    case 'checkbox_group':     return serializeCheckboxGroup(inst);
-    case 'radio_button_group': return serializeRadioButtonGroup(inst);
+    case 'button':              return serializeButton(inst, ctx);
+    case 'static_select':      return serializeStaticSelect(inst, ctx);
+    case 'multi_static_select': return serializeMultiStaticSelect(inst, ctx);
+    case 'users_select':       return serializeUsersSelect(inst, ctx);
+    case 'multi_users_select': return serializeMultiUsersSelect(inst, ctx);
+    case 'channels_select':    return serializeChannelsSelect(inst, ctx);
+    case 'multi_channels_select': return serializeMultiChannelsSelect(inst, ctx);
+    case 'conversations_select': return serializeConversationsSelect(inst, ctx);
+    case 'multi_conversations_select': return serializeMultiConversationsSelect(inst, ctx);
+    case 'overflow':           return serializeOverflow(inst, ctx);
+    case 'datepicker':         return serializeDatePicker(inst, ctx);
+    case 'timepicker':         return serializeTimePicker(inst, ctx);
+    case 'linear_scale':       return serializeLinearScale(inst, ctx);
+    case 'toggle_switch':      return serializeToggleSwitch(inst, ctx);
+    case 'checkbox_group':     return serializeCheckboxGroup(inst, ctx);
+    case 'radio_button_group': return serializeRadioButtonGroup(inst, ctx);
     default:                   return null;
   }
 }
@@ -486,23 +537,23 @@ function serializeActionsElement(inst: Instance): ActionsElement | null {
 // Input-element serializer
 // ─────────────────────────────────────────────────────────────────────────────
 
-function serializeInputElement(inst: Instance): InputElement | null {
+function serializeInputElement(inst: Instance, ctx: BlockContext = {}): InputElement | null {
   switch (inst.type) {
-    case 'plain_text_input':   return serializePlainTextInput(inst);
-    case 'static_select':      return serializeStaticSelect(inst);
-    case 'multi_static_select': return serializeMultiStaticSelect(inst);
-    case 'users_select':       return serializeUsersSelect(inst);
-    case 'multi_users_select': return serializeMultiUsersSelect(inst);
-    case 'channels_select':    return serializeChannelsSelect(inst);
-    case 'multi_channels_select': return serializeMultiChannelsSelect(inst);
-    case 'conversations_select': return serializeConversationsSelect(inst);
-    case 'multi_conversations_select': return serializeMultiConversationsSelect(inst);
-    case 'datepicker':         return serializeDatePicker(inst);
-    case 'timepicker':         return serializeTimePicker(inst);
-    case 'linear_scale':       return serializeLinearScale(inst);
-    case 'checkbox_group':     return serializeCheckboxGroup(inst);
-    case 'radio_button_group': return serializeRadioButtonGroup(inst);
-    case 'toggle_switch':      return serializeToggleSwitch(inst);
+    case 'plain_text_input':   return serializePlainTextInput(inst, ctx);
+    case 'static_select':      return serializeStaticSelect(inst, ctx);
+    case 'multi_static_select': return serializeMultiStaticSelect(inst, ctx);
+    case 'users_select':       return serializeUsersSelect(inst, ctx);
+    case 'multi_users_select': return serializeMultiUsersSelect(inst, ctx);
+    case 'channels_select':    return serializeChannelsSelect(inst, ctx);
+    case 'multi_channels_select': return serializeMultiChannelsSelect(inst, ctx);
+    case 'conversations_select': return serializeConversationsSelect(inst, ctx);
+    case 'multi_conversations_select': return serializeMultiConversationsSelect(inst, ctx);
+    case 'datepicker':         return serializeDatePicker(inst, ctx);
+    case 'timepicker':         return serializeTimePicker(inst, ctx);
+    case 'linear_scale':       return serializeLinearScale(inst, ctx);
+    case 'checkbox_group':     return serializeCheckboxGroup(inst, ctx);
+    case 'radio_button_group': return serializeRadioButtonGroup(inst, ctx);
+    case 'toggle_switch':      return serializeToggleSwitch(inst, ctx);
     default:                   return null;
   }
 }
@@ -511,14 +562,14 @@ function serializeInputElement(inst: Instance): InputElement | null {
 // Section accessory serializer
 // ─────────────────────────────────────────────────────────────────────────────
 
-function serializeSectionAccessory(inst: Instance): SectionAccessory | null {
+function serializeSectionAccessory(inst: Instance, ctx: BlockContext = {}): SectionAccessory | null {
   switch (inst.type) {
-    case 'button':             return serializeButton(inst);
-    case 'datepicker':         return serializeDatePicker(inst);
+    case 'button':             return serializeButton(inst, ctx);
+    case 'datepicker':         return serializeDatePicker(inst, ctx);
     case 'image_element':      return serializeImageElement(inst);
-    case 'multi_static_select': return serializeMultiStaticSelect(inst);
-    case 'overflow':           return serializeOverflow(inst);
-    case 'static_select':      return serializeStaticSelect(inst);
+    case 'multi_static_select': return serializeMultiStaticSelect(inst, ctx);
+    case 'overflow':           return serializeOverflow(inst, ctx);
+    case 'static_select':      return serializeStaticSelect(inst, ctx);
     default:                   return null;
   }
 }
@@ -527,10 +578,10 @@ function serializeSectionAccessory(inst: Instance): SectionAccessory | null {
 // Callout accessory serializer
 // ─────────────────────────────────────────────────────────────────────────────
 
-function serializeCalloutAccessory(inst: Instance): CalloutAccessory | null {
+function serializeCalloutAccessory(inst: Instance, ctx: BlockContext = {}): CalloutAccessory | null {
   switch (inst.type) {
-    case 'button':   return serializeButton(inst);
-    case 'overflow': return serializeOverflow(inst);
+    case 'button':   return serializeButton(inst, ctx);
+    case 'overflow': return serializeOverflow(inst, ctx);
     default:         return null;
   }
 }
@@ -541,9 +592,10 @@ function serializeCalloutAccessory(inst: Instance): CalloutAccessory | null {
 
 function serializeActionsBlock(inst: Instance): ActionsBlock {
   const p = inst.props as { blockId?: string; appId?: string };
+  const ctx: BlockContext = { blockId: p.blockId, appId: p.appId };
   const elements = inst.children
     .filter((c): c is Instance => c.nodeType === 'instance')
-    .map(serializeActionsElement)
+    .map((c) => serializeActionsElement(c, ctx))
     .filter((e): e is ActionsElement => e !== null);
   return {
     type: 'actions',
@@ -559,11 +611,12 @@ function serializeSectionBlock(inst: Instance): SectionBlock {
     text?: string | TextObject;
     fields?: Array<string | TextObject>;
   };
+  const ctx: BlockContext = { blockId: p.blockId, appId: p.appId };
   const elementChildren = inst.children.filter(
     (c): c is Instance => c.nodeType === 'instance',
   );
   const accessory = elementChildren[0]
-    ? serializeSectionAccessory(elementChildren[0]) ?? undefined
+    ? serializeSectionAccessory(elementChildren[0], ctx) ?? undefined
     : undefined;
 
   return {
@@ -585,13 +638,14 @@ function serializeInputBlock(inst: Instance): InputBlock {
     hint?: string | TextObject;
     optional?: boolean;
   };
+  const ctx: BlockContext = { blockId: p.blockId, appId: p.appId };
   const elementChild = inst.children.find(
     (c): c is Instance => c.nodeType === 'instance',
   );
   if (elementChild === undefined) {
     throw new Error(`<Input> requires exactly one child element.`);
   }
-  const element = serializeInputElement(elementChild);
+  const element = serializeInputElement(elementChild, ctx);
   if (element === null) {
     throw new Error(
       `<Input> child "${elementChild.type}" is not a valid input element.`,
@@ -652,11 +706,12 @@ function serializeCalloutBlock(inst: Instance): CalloutBlock {
     title?: string | TextObject;
     variant?: 'info' | 'danger' | 'warning' | 'success';
   };
+  const ctx: BlockContext = { blockId: p.blockId, appId: p.appId };
   const elementChild = inst.children.find(
     (c): c is Instance => c.nodeType === 'instance',
   );
   const accessory = elementChild
-    ? serializeCalloutAccessory(elementChild) ?? undefined
+    ? serializeCalloutAccessory(elementChild, ctx) ?? undefined
     : undefined;
 
   return {
@@ -759,9 +814,11 @@ function serializeConditionalBlock(inst: Instance): ConditionalBlock {
 }
 
 function serializeTabNavigationBlock(inst: Instance): ExperimentalTabNavigationBlock {
+  const p = inst.props as { blockId?: string; appId?: string };
+  const ctx: BlockContext = { blockId: p.blockId, appId: p.appId };
   const tabs = inst.children
     .filter((c): c is Instance => c.nodeType === 'instance' && c.type === 'tab')
-    .map(serializeTab);
+    .map((c) => serializeTab(c, ctx));
   return { type: 'tab_navigation', tabs };
 }
 

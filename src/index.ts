@@ -5,6 +5,9 @@
 // render
 export { render } from './render';
 
+// Serializer utilities
+export { resetActionIdCounter } from './serializer';
+
 // Block components
 export {
   Actions,

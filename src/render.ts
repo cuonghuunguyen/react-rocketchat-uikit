@@ -32,9 +32,9 @@ export function render(element: ReactNode): LayoutBlock[] {
     /* isStrictMode */ false,
     /* concurrentUpdatesByDefaultOverride */ null,
     /* identifierPrefix */ '',
-    /* onUncaughtError */ (err) => { throw err; },
+    /* onUncaughtError */ (err: Error) => { throw err; },
     /* onCaughtError */ () => undefined,
-    /* onRecoverableError */ (err) => { throw err; },
+    /* onRecoverableError */ (err: Error) => { throw err; },
     /* onDefaultTransitionIndicator */ () => undefined,
   );
 
