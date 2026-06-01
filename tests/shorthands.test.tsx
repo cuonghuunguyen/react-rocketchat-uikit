@@ -143,8 +143,8 @@ describe('InputStaticSelect', () => {
           actionId: ACTION,
           placeholder: { type: 'plain_text', text: 'Pick a color' },
           options: [
-            { type: 'option', text: { type: 'plain_text', text: 'Red' }, value: 'red' },
-            { type: 'option', text: { type: 'plain_text', text: 'Blue' }, value: 'blue' },
+            { text: { type: 'plain_text', text: 'Red' }, value: 'red' },
+            { text: { type: 'plain_text', text: 'Blue' }, value: 'blue' },
           ],
         },
       },
@@ -290,8 +290,8 @@ describe('SectionOverflow', () => {
           blockId: BLOCK,
           actionId: ACTION,
           options: [
-            { type: 'option', text: { type: 'plain_text', text: 'Option 1' }, value: 'opt1' },
-            { type: 'option', text: { type: 'plain_text', text: 'Option 2' }, value: 'opt2' },
+            { text: { type: 'plain_text', text: 'Option 1' }, value: 'opt1' },
+            { text: { type: 'plain_text', text: 'Option 2' }, value: 'opt2' },
           ],
         },
       },

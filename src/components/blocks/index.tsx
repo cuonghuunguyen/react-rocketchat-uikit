@@ -1,5 +1,5 @@
 import { createElement, type ReactNode } from 'react';
-import type { TextObject } from '../../types';
+import type { DividerBlock, TextObject } from '../../types';
 
 // Internal helper — lets us create custom host elements with typed React props
 // without fighting the JSX intrinsic-element type system.
@@ -61,10 +61,7 @@ export interface ImageBlockProps {
   title?: string | TextObject;
 }
 
-export interface DividerProps {
-  blockId?: string;
-  appId?: string;
-}
+export type DividerProps = Pick<DividerBlock, 'appId' | 'blockId'>;
 
 export interface CalloutProps {
   blockId?: string;
@@ -82,8 +79,10 @@ export interface CalloutProps {
 export interface PreviewPropsWithThumb {
   blockId?: string;
   appId?: string;
-  title: Array<string | TextObject>;
-  description: Array<string | TextObject>;
+  /** Accepts strings, TextObjects, or React text elements (`<Mrkdwn>`, `<Plain>`). */
+  title: Array<string | TextObject | ReactNode>;
+  /** Accepts strings, TextObjects, or React text elements (`<Mrkdwn>`, `<Plain>`). */
+  description: Array<string | TextObject | ReactNode>;
   thumb: { url: string; dimensions?: { width: number; height: number } };
   preview?: never;
   externalUrl?: never;
@@ -96,8 +95,10 @@ export interface PreviewPropsWithThumb {
 export interface PreviewPropsWithPreview {
   blockId?: string;
   appId?: string;
-  title: Array<string | TextObject>;
-  description: Array<string | TextObject>;
+  /** Accepts strings, TextObjects, or React text elements (`<Mrkdwn>`, `<Plain>`). */
+  title: Array<string | TextObject | ReactNode>;
+  /** Accepts strings, TextObjects, or React text elements (`<Mrkdwn>`, `<Plain>`). */
+  description: Array<string | TextObject | ReactNode>;
   preview: { url: string; dimensions?: { width: number; height: number } };
   externalUrl?: string;
   oembedUrl?: string;
@@ -109,8 +110,10 @@ export interface PreviewPropsWithPreview {
 export interface PreviewPropsNoMedia {
   blockId?: string;
   appId?: string;
-  title: Array<string | TextObject>;
-  description: Array<string | TextObject>;
+  /** Accepts strings, TextObjects, or React text elements (`<Mrkdwn>`, `<Plain>`). */
+  title: Array<string | TextObject | ReactNode>;
+  /** Accepts strings, TextObjects, or React text elements (`<Mrkdwn>`, `<Plain>`). */
+  description: Array<string | TextObject | ReactNode>;
   thumb?: never;
   preview?: never;
   /** Optional `<Context>` block rendered as `footer`. */

@@ -1,50 +1,52 @@
-import type {
-  ActionsBlock,
-  ActionsElement,
-  ButtonElement,
-  CalloutBlock,
-  CalloutAccessory,
-  ChannelsSelectElement,
-  CheckboxElement,
-  ConditionalBlock,
-  ContextBlock,
-  ContextElement,
-  ConversationsSelectElement,
-  DatePickerElement,
-  DividerBlock,
-  ExperimentalTabElement,
-  ExperimentalTabNavigationBlock,
-  IconButtonElement,
-  ImageBlock,
-  ImageElement,
-  InfoCardBlock,
-  InfoCardRow,
-  InputBlock,
-  InputElement,
-  LayoutBlock,
-  LinearScaleElement,
-  Markdown,
-  MultiChannelsSelectElement,
-  MultiConversationsSelectElement,
-  MultiStaticSelectElement,
-  MultiUsersSelectElement,
-  OptionObject,
-  OverflowElement,
-  PlainText,
-  PlainTextInputElement,
-  PreviewBlock,
-  RadioButtonElement,
-  RenderableLayoutBlock,
-  SectionAccessory,
-  SectionBlock,
-  StaticSelectElement,
-  TextObject,
-  TimePickerElement,
-  ToggleSwitchElement,
-  UsersSelectElement,
-  VideoConferenceBlock,
-} from '../types';
+import type { ReactNode } from 'react';
 import type { Instance, TextInstance } from '../reconciler/types';
+import type {
+    ActionsBlock,
+    ActionsElement,
+    ButtonElement,
+    CalloutAccessory,
+    CalloutBlock,
+    ChannelsSelectElement,
+    CheckboxElement,
+    ConditionalBlock,
+    ContextBlock,
+    ContextElement,
+    ConversationsSelectElement,
+    DatePickerElement,
+    DividerBlock,
+    ExperimentalTabElement,
+    ExperimentalTabNavigationBlock,
+    IconButtonElement,
+    IconElement,
+    ImageBlock,
+    ImageElement,
+    InfoCardBlock,
+    InfoCardRow,
+    InputBlock,
+    InputElement,
+    LayoutBlock,
+    LinearScaleElement,
+    Markdown,
+    MultiChannelsSelectElement,
+    MultiConversationsSelectElement,
+    MultiStaticSelectElement,
+    MultiUsersSelectElement,
+    OptionObject,
+    OverflowElement,
+    PlainText,
+    PlainTextInputElement,
+    PreviewBlock,
+    RadioButtonElement,
+    RenderableLayoutBlock,
+    SectionAccessory,
+    SectionBlock,
+    StaticSelectElement,
+    TextObject,
+    TimePickerElement,
+    ToggleSwitchElement,
+    UsersSelectElement,
+    VideoConferenceBlock,
+} from '../types';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Text helpers
@@ -65,6 +67,42 @@ export function toPlainText(value: string | TextObject): PlainText {
 export function toTextObject(value: string | TextObject): TextObject {
   if (typeof value === 'string') return { type: 'mrkdwn', text: value };
   return value;
+}
+
+/**
+ * Convert a value that may be a string, TextObject, or React element (e.g.
+ * `<Mrkdwn text="..." />` or `<Plain text="..." />`) into a TextObject.
+ * Returns null for values that cannot be mapped.
+ */
+function toTextObjectOrNull(value: string | TextObject | ReactNode): TextObject | null {
+  if (typeof value === 'string') return { type: 'mrkdwn', text: value };
+  if (!value || typeof value !== 'object') return null;
+
+  const v = value as Record<string, unknown>;
+
+  // Already a TextObject
+  if ((v['type'] === 'mrkdwn' || v['type'] === 'plain_text') && typeof v['text'] === 'string') {
+    return value as TextObject;
+  }
+
+  // React component element — call the function to resolve to a host element
+  if ('$$typeof' in v && typeof v['type'] === 'function') {
+    try {
+      return toTextObjectOrNull((v['type'] as (p: unknown) => unknown)(v['props']) as ReactNode);
+    } catch {
+      return null;
+    }
+  }
+
+  // React host element created via createElement('mrkdwn'|'plain_text', ...)
+  if (typeof v['type'] === 'string' && (v['type'] === 'mrkdwn' || v['type'] === 'plain_text')) {
+    const props = (v['props'] ?? {}) as { text?: string };
+    if (typeof props.text === 'string') {
+      return { type: v['type'] as 'mrkdwn' | 'plain_text', text: props.text };
+    }
+  }
+
+  return null;
 }
 
 /**
@@ -100,17 +138,15 @@ function instanceText(inst: Instance): string {
 function serializeOption(inst: Instance): OptionObject {
   const props = inst.props as {
     value?: string;
-    description?: string | TextObject;
+    description?: string | TextObject | ReactNode;
     url?: string;
   };
   const text = childrenToText(inst.children);
+  const descTextObj = props.description !== undefined ? toTextObjectOrNull(props.description) : null;
   return {
-    type: 'option',
     text: { type: 'plain_text', text },
     value: props.value ?? '',
-    ...(props.description !== undefined
-      ? { description: toPlainText(props.description) }
-      : {}),
+    ...(descTextObj !== null ? { description: toPlainText(descTextObj) } : {}),
     ...(props.url !== undefined ? { url: props.url } : {}),
   };
 }
@@ -156,10 +192,9 @@ function serializeButton(inst: Instance, ctx: BlockContext = {}): ButtonElement 
     actionId?: string;
     appId?: string;
     blockId?: string;
-    style?: 'primary' | 'danger';
+    style?: 'primary' | 'secondary' | 'danger' | 'warning' | 'success';
     url?: string;
     value?: string;
-    disabled?: boolean;
     confirm?: unknown;
   };
   const textContent = childrenToText(inst.children);
@@ -173,7 +208,6 @@ function serializeButton(inst: Instance, ctx: BlockContext = {}): ButtonElement 
     ...(p.style !== undefined ? { style: p.style } : {}),
     ...(p.url !== undefined ? { url: p.url } : {}),
     ...(p.value !== undefined ? { value: p.value } : {}),
-    ...(p.disabled !== undefined ? { disabled: p.disabled } : {}),
     ...(p.confirm !== undefined
       ? { confirm: p.confirm as ButtonElement['confirm'] }
       : {}),
@@ -185,18 +219,23 @@ function serializeIconButton(inst: Instance, ctx: BlockContext = {}): IconButton
     actionId?: string;
     appId?: string;
     blockId?: string;
-    style?: 'primary' | 'danger' | 'warning' | 'success';
+    icon: IconElement['icon'];
+    variant?: IconElement['variant'];
+    label?: string;
+    url?: string;
+    value?: string;
     confirm?: unknown;
   };
-  const iconText = childrenToText(inst.children);
   const { actionId, appId, blockId } = resolveActionable(p, ctx);
   return {
     type: 'icon_button',
     actionId,
     appId,
     blockId,
-    icon: { type: 'plain_text', text: iconText },
-    ...(p.style !== undefined ? { style: p.style } : {}),
+    icon: { type: 'icon', icon: p.icon, variant: p.variant ?? 'default' },
+    ...(p.label !== undefined ? { label: p.label } : {}),
+    ...(p.url !== undefined ? { url: p.url } : {}),
+    ...(p.value !== undefined ? { value: p.value } : {}),
     ...(p.confirm !== undefined
       ? { confirm: p.confirm as IconButtonElement['confirm'] }
       : {}),
@@ -222,7 +261,7 @@ function serializeStaticSelect(inst: Instance, ctx: BlockContext = {}): StaticSe
     type: 'static_select',
     actionId, appId, blockId,
     options,
-    ...(p.placeholder !== undefined ? { placeholder: toPlainText(p.placeholder) } : {}),
+    placeholder: p.placeholder !== undefined ? toPlainText(p.placeholder) : { type: 'plain_text', text: '' },
     ...(p.confirm !== undefined ? { confirm: p.confirm as StaticSelectElement['confirm'] } : {}),
   };
 }
@@ -240,7 +279,7 @@ function serializeMultiStaticSelect(inst: Instance, ctx: BlockContext = {}): Mul
     type: 'multi_static_select',
     actionId, appId, blockId,
     options,
-    ...(p.placeholder !== undefined ? { placeholder: toPlainText(p.placeholder) } : {}),
+    placeholder: p.placeholder !== undefined ? toPlainText(p.placeholder) : { type: 'plain_text', text: '' },
     ...(p.maxSelectItems !== undefined ? { maxSelectItems: p.maxSelectItems } : {}),
     ...(p.confirm !== undefined ? { confirm: p.confirm as MultiStaticSelectElement['confirm'] } : {}),
   };
@@ -249,14 +288,13 @@ function serializeMultiStaticSelect(inst: Instance, ctx: BlockContext = {}): Mul
 function serializeUsersSelect(inst: Instance, ctx: BlockContext = {}): UsersSelectElement {
   const p = inst.props as {
     actionId?: string; appId?: string; blockId?: string;
-    placeholder?: string | TextObject; initialUser?: string; confirm?: unknown;
+    placeholder?: string | TextObject; confirm?: unknown;
   };
   const { actionId, appId, blockId } = resolveActionable(p, ctx);
   return {
     type: 'users_select',
     actionId, appId, blockId,
     ...(p.placeholder !== undefined ? { placeholder: toPlainText(p.placeholder) } : {}),
-    ...(p.initialUser !== undefined ? { initialUser: p.initialUser } : {}),
     ...(p.confirm !== undefined ? { confirm: p.confirm as UsersSelectElement['confirm'] } : {}),
   };
 }
@@ -264,14 +302,13 @@ function serializeUsersSelect(inst: Instance, ctx: BlockContext = {}): UsersSele
 function serializeMultiUsersSelect(inst: Instance, ctx: BlockContext = {}): MultiUsersSelectElement {
   const p = inst.props as {
     actionId?: string; appId?: string; blockId?: string;
-    placeholder?: string | TextObject; maxSelectItems?: number; confirm?: unknown;
+    placeholder?: string | TextObject; confirm?: unknown;
   };
   const { actionId, appId, blockId } = resolveActionable(p, ctx);
   return {
     type: 'multi_users_select',
     actionId, appId, blockId,
     ...(p.placeholder !== undefined ? { placeholder: toPlainText(p.placeholder) } : {}),
-    ...(p.maxSelectItems !== undefined ? { maxSelectItems: p.maxSelectItems } : {}),
     ...(p.confirm !== undefined ? { confirm: p.confirm as MultiUsersSelectElement['confirm'] } : {}),
   };
 }
@@ -279,14 +316,13 @@ function serializeMultiUsersSelect(inst: Instance, ctx: BlockContext = {}): Mult
 function serializeChannelsSelect(inst: Instance, ctx: BlockContext = {}): ChannelsSelectElement {
   const p = inst.props as {
     actionId?: string; appId?: string; blockId?: string;
-    placeholder?: string | TextObject; initialChannel?: string; confirm?: unknown;
+    placeholder?: string | TextObject; confirm?: unknown;
   };
   const { actionId, appId, blockId } = resolveActionable(p, ctx);
   return {
     type: 'channels_select',
     actionId, appId, blockId,
     ...(p.placeholder !== undefined ? { placeholder: toPlainText(p.placeholder) } : {}),
-    ...(p.initialChannel !== undefined ? { initialChannel: p.initialChannel } : {}),
     ...(p.confirm !== undefined ? { confirm: p.confirm as ChannelsSelectElement['confirm'] } : {}),
   };
 }
@@ -294,46 +330,37 @@ function serializeChannelsSelect(inst: Instance, ctx: BlockContext = {}): Channe
 function serializeMultiChannelsSelect(inst: Instance, ctx: BlockContext = {}): MultiChannelsSelectElement {
   const p = inst.props as {
     actionId?: string; appId?: string; blockId?: string;
-    placeholder?: string | TextObject; maxSelectItems?: number; confirm?: unknown;
+    placeholder?: string | TextObject; confirm?: unknown;
   };
   const { actionId, appId, blockId } = resolveActionable(p, ctx);
   return {
     type: 'multi_channels_select',
     actionId, appId, blockId,
     ...(p.placeholder !== undefined ? { placeholder: toPlainText(p.placeholder) } : {}),
-    ...(p.maxSelectItems !== undefined ? { maxSelectItems: p.maxSelectItems } : {}),
     ...(p.confirm !== undefined ? { confirm: p.confirm as MultiChannelsSelectElement['confirm'] } : {}),
   };
 }
 
 function serializeConversationsSelect(inst: Instance, ctx: BlockContext = {}): ConversationsSelectElement {
   const p = inst.props as {
-    actionId?: string; appId?: string; blockId?: string;
-    placeholder?: string | TextObject; initialConversation?: string;
-    filter?: ConversationsSelectElement['filter']; confirm?: unknown;
+    actionId?: string; appId?: string; blockId?: string; confirm?: unknown;
   };
   const { actionId, appId, blockId } = resolveActionable(p, ctx);
   return {
     type: 'conversations_select',
     actionId, appId, blockId,
-    ...(p.placeholder !== undefined ? { placeholder: toPlainText(p.placeholder) } : {}),
-    ...(p.initialConversation !== undefined ? { initialConversation: p.initialConversation } : {}),
-    ...(p.filter !== undefined ? { filter: p.filter } : {}),
     ...(p.confirm !== undefined ? { confirm: p.confirm as ConversationsSelectElement['confirm'] } : {}),
   };
 }
 
 function serializeMultiConversationsSelect(inst: Instance, ctx: BlockContext = {}): MultiConversationsSelectElement {
   const p = inst.props as {
-    actionId?: string; appId?: string; blockId?: string;
-    placeholder?: string | TextObject; maxSelectItems?: number; confirm?: unknown;
+    actionId?: string; appId?: string; blockId?: string; confirm?: unknown;
   };
   const { actionId, appId, blockId } = resolveActionable(p, ctx);
   return {
     type: 'multi_conversations_select',
     actionId, appId, blockId,
-    ...(p.placeholder !== undefined ? { placeholder: toPlainText(p.placeholder) } : {}),
-    ...(p.maxSelectItems !== undefined ? { maxSelectItems: p.maxSelectItems } : {}),
     ...(p.confirm !== undefined ? { confirm: p.confirm as MultiConversationsSelectElement['confirm'] } : {}),
   };
 }
@@ -374,7 +401,7 @@ function serializeTimePicker(inst: Instance, ctx: BlockContext = {}): TimePicker
   };
   const { actionId, appId, blockId } = resolveActionable(p, ctx);
   return {
-    type: 'timepicker',
+    type: 'time_picker',
     actionId, appId, blockId,
     ...(p.placeholder !== undefined ? { placeholder: toPlainText(p.placeholder) } : {}),
     ...(p.initialTime !== undefined ? { initialTime: p.initialTime } : {}),
@@ -386,7 +413,7 @@ function serializeLinearScale(inst: Instance, ctx: BlockContext = {}): LinearSca
   const p = inst.props as {
     actionId?: string; appId?: string; blockId?: string;
     minValue?: number; maxValue?: number; initialValue?: number;
-    label?: string | TextObject; confirm?: unknown;
+    preLabel?: string | TextObject; postLabel?: string | TextObject; confirm?: unknown;
   };
   const { actionId, appId, blockId } = resolveActionable(p, ctx);
   return {
@@ -395,22 +422,22 @@ function serializeLinearScale(inst: Instance, ctx: BlockContext = {}): LinearSca
     ...(p.minValue !== undefined ? { minValue: p.minValue } : {}),
     ...(p.maxValue !== undefined ? { maxValue: p.maxValue } : {}),
     ...(p.initialValue !== undefined ? { initialValue: p.initialValue } : {}),
-    ...(p.label !== undefined ? { label: toPlainText(p.label) } : {}),
+    ...(p.preLabel !== undefined ? { preLabel: toPlainText(p.preLabel) } : {}),
+    ...(p.postLabel !== undefined ? { postLabel: toPlainText(p.postLabel) } : {}),
     ...(p.confirm !== undefined ? { confirm: p.confirm as LinearScaleElement['confirm'] } : {}),
   };
 }
 
 function serializeToggleSwitch(inst: Instance, ctx: BlockContext = {}): ToggleSwitchElement {
   const p = inst.props as {
-    actionId?: string; appId?: string; blockId?: string;
-    text: string | TextObject; checked?: boolean; confirm?: unknown;
+    actionId?: string; appId?: string; blockId?: string; confirm?: unknown;
   };
+  const options = serializeOptions(inst.children);
   const { actionId, appId, blockId } = resolveActionable(p, ctx);
   return {
     type: 'toggle_switch',
     actionId, appId, blockId,
-    text: toPlainText(p.text),
-    ...(p.checked !== undefined ? { checked: p.checked } : {}),
+    options,
     ...(p.confirm !== undefined ? { confirm: p.confirm as ToggleSwitchElement['confirm'] } : {}),
   };
 }
@@ -422,7 +449,7 @@ function serializeCheckboxGroup(inst: Instance, ctx: BlockContext = {}): Checkbo
   const options = serializeOptions(inst.children);
   const { actionId, appId, blockId } = resolveActionable(p, ctx);
   return {
-    type: 'checkboxes',
+    type: 'checkbox',
     actionId, appId, blockId,
     options,
     ...(p.confirm !== undefined ? { confirm: p.confirm as CheckboxElement['confirm'] } : {}),
@@ -436,7 +463,7 @@ function serializeRadioButtonGroup(inst: Instance, ctx: BlockContext = {}): Radi
   const options = serializeOptions(inst.children);
   const { actionId, appId, blockId } = resolveActionable(p, ctx);
   return {
-    type: 'radio_buttons',
+    type: 'radio_button',
     actionId, appId, blockId,
     options,
     ...(p.confirm !== undefined ? { confirm: p.confirm as RadioButtonElement['confirm'] } : {}),
@@ -728,8 +755,8 @@ function serializeCalloutBlock(inst: Instance): CalloutBlock {
 function serializePreviewBlock(inst: Instance): PreviewBlock {
   const p = inst.props as {
     blockId?: string; appId?: string;
-    title: Array<string | TextObject>;
-    description: Array<string | TextObject>;
+    title: Array<string | TextObject | ReactNode>;
+    description: Array<string | TextObject | ReactNode>;
     thumb?: { url: string; dimensions?: { width: number; height: number } };
     preview?: { url: string; dimensions?: { width: number; height: number } };
     externalUrl?: string;
@@ -746,8 +773,8 @@ function serializePreviewBlock(inst: Instance): PreviewBlock {
 
   const base = {
     type: 'preview' as const,
-    title: p.title.map(toTextObject),
-    description: p.description.map(toTextObject),
+    title: p.title.map(toTextObjectOrNull).filter((t): t is TextObject => t !== null),
+    description: p.description.map(toTextObjectOrNull).filter((t): t is TextObject => t !== null),
     ...(footer !== undefined ? { footer } : {}),
     ...(p.blockId !== undefined ? { blockId: p.blockId } : {}),
     ...(p.appId !== undefined ? { appId: p.appId } : {}),
@@ -789,7 +816,6 @@ function serializeInfoCardRow(inst: Instance): InfoCardRow {
     .map((child): InfoCardRow['elements'][number] | null => {
       if (child.type === 'mrkdwn') return { type: 'mrkdwn', text: instanceText(child) };
       if (child.type === 'plain_text') return { type: 'plain_text', text: instanceText(child) };
-      if (child.type === 'image_element') return serializeImageElement(child);
       return null;
     })
     .filter((e): e is InfoCardRow['elements'][number] => e !== null);

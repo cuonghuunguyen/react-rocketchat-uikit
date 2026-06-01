@@ -1,7 +1,7 @@
 import { createElement, type ReactNode } from 'react';
 import type {
-  ConfirmationDialog,
-  ConversationsSelectElement,
+  ButtonElement,
+  IconElement,
   InputElementDispatchAction,
   TextObject,
 } from '../../types';
@@ -30,7 +30,7 @@ interface ActionableProps {
    * The block this element belongs to. If omitted, inherits from the parent block's `blockId`.
    */
   blockId?: string;
-  confirm?: ConfirmationDialog;
+  confirm?: ButtonElement['confirm'];
   dispatchActionConfig?: readonly InputElementDispatchAction[];
 }
 
@@ -40,8 +40,8 @@ interface ActionableProps {
 
 export interface OptionProps {
   value: string;
-  /** Description text shown below the option label. */
-  description?: string | TextObject;
+  /** Description text shown below the option label. Also accepts a `<Plain>` or `<Mrkdwn>` element. */
+  description?: string | TextObject | ReactNode;
   /** URL to open when the option is selected (overflow only). */
   url?: string;
   /** The option label — text content of this element. */
@@ -57,10 +57,9 @@ export const Option = (props: OptionProps) =>
 // ─────────────────────────────────────────────────────────────────────────────
 
 export interface ButtonProps extends ActionableProps {
-  style?: 'primary' | 'danger';
+  style?: ButtonElement['style'];
   url?: string;
   value?: string;
-  disabled?: boolean;
   /** Button label — text content of this element. */
   children: ReactNode;
 }
@@ -74,9 +73,13 @@ export const Button = (props: ButtonProps) =>
 // ─────────────────────────────────────────────────────────────────────────────
 
 export interface IconButtonProps extends ActionableProps {
-  style?: 'primary' | 'danger' | 'warning' | 'success';
-  /** Icon character / emoji — text content of this element. */
-  children: ReactNode;
+  /** The icon to display — one of the available icon names. */
+  icon: IconElement['icon'];
+  /** Visual variant of the icon. Defaults to `'default'`. */
+  variant?: IconElement['variant'];
+  label?: string;
+  url?: string;
+  value?: string;
 }
 
 /**
@@ -92,6 +95,7 @@ export const IconButton = (props: IconButtonProps) =>
 
 export interface StaticSelectProps extends ActionableProps {
   placeholder?: string | TextObject;
+  initialValue?: string;
   /** `<Option>` children define the selectable items. */
   children: ReactNode;
 }
@@ -121,7 +125,6 @@ export const MultiStaticSelect = (props: MultiStaticSelectProps) =>
 
 export interface UsersSelectProps extends ActionableProps {
   placeholder?: string | TextObject;
-  initialUser?: string;
 }
 
 /** A dropdown that lets the user pick a single workspace user. */
@@ -134,7 +137,6 @@ export const UsersSelect = (props: UsersSelectProps) =>
 
 export interface MultiUsersSelectProps extends ActionableProps {
   placeholder?: string | TextObject;
-  maxSelectItems?: number;
 }
 
 /** A dropdown that lets the user pick multiple workspace users. */
@@ -147,7 +149,6 @@ export const MultiUsersSelect = (props: MultiUsersSelectProps) =>
 
 export interface ChannelsSelectProps extends ActionableProps {
   placeholder?: string | TextObject;
-  initialChannel?: string;
 }
 
 /** A dropdown that lets the user pick a single channel. */
@@ -160,7 +161,6 @@ export const ChannelsSelect = (props: ChannelsSelectProps) =>
 
 export interface MultiChannelsSelectProps extends ActionableProps {
   placeholder?: string | TextObject;
-  maxSelectItems?: number;
 }
 
 /** A dropdown that lets the user pick multiple channels. */
@@ -171,11 +171,7 @@ export const MultiChannelsSelect = (props: MultiChannelsSelectProps) =>
 // Conversations select
 // ─────────────────────────────────────────────────────────────────────────────
 
-export interface ConversationsSelectProps extends ActionableProps {
-  placeholder?: string | TextObject;
-  initialConversation?: string;
-  filter?: ConversationsSelectElement['filter'];
-}
+export interface ConversationsSelectProps extends ActionableProps {}
 
 /** A dropdown that lets the user pick a single conversation. */
 export const ConversationsSelect = (props: ConversationsSelectProps) =>
@@ -185,10 +181,7 @@ export const ConversationsSelect = (props: ConversationsSelectProps) =>
 // Multi conversations select
 // ─────────────────────────────────────────────────────────────────────────────
 
-export interface MultiConversationsSelectProps extends ActionableProps {
-  placeholder?: string | TextObject;
-  maxSelectItems?: number;
-}
+export interface MultiConversationsSelectProps extends ActionableProps {}
 
 /** A dropdown that lets the user pick multiple conversations. */
 export const MultiConversationsSelect = (props: MultiConversationsSelectProps) =>
@@ -239,7 +232,8 @@ export interface LinearScaleProps extends ActionableProps {
   minValue?: number;
   maxValue?: number;
   initialValue?: number;
-  label?: string | TextObject;
+  preLabel?: string | TextObject;
+  postLabel?: string | TextObject;
 }
 
 /** A horizontal numeric scale slider. */
@@ -251,9 +245,8 @@ export const LinearScale = (props: LinearScaleProps) =>
 // ─────────────────────────────────────────────────────────────────────────────
 
 export interface ToggleSwitchProps extends ActionableProps {
-  /** Label for the switch — string is converted to `plain_text`. */
-  text: string | TextObject;
-  checked?: boolean;
+  /** `<Option>` children define the toggle items. */
+  children: ReactNode;
 }
 
 /** A boolean on/off toggle switch. */

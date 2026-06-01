@@ -1,7 +1,5 @@
 /** @jest-environment node */
 
-import React from 'react';
-import { render } from '../src/render';
 import {
   Actions,
   Button,
@@ -40,6 +38,7 @@ import {
   UsersSelect,
   VideoConference,
 } from '../src';
+import { render } from '../src/render';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers
@@ -404,9 +403,7 @@ describe('InfoCard', () => {
       <InfoCard>
         <InfoCardRow background="secondary">
           <Mrkdwn text="Row" />
-          <IconButton appId={APP} blockId={BLOCK} actionId={ACTION}>
-            ✏️
-          </IconButton>
+        <IconButton appId={APP} blockId={BLOCK} actionId={ACTION} icon="info" variant="default" />
         </InfoCardRow>
       </InfoCard>,
     );
@@ -519,8 +516,8 @@ describe('StaticSelect', () => {
       type: 'static_select',
       placeholder: { type: 'plain_text', text: 'Choose' },
       options: [
-        { type: 'option', text: { type: 'plain_text', text: 'Option A' }, value: 'a' },
-        { type: 'option', text: { type: 'plain_text', text: 'Option B' }, value: 'b' },
+        { text: { type: 'plain_text', text: 'Option A' }, value: 'a' },
+        { text: { type: 'plain_text', text: 'Option B' }, value: 'b' },
       ],
     });
   });
@@ -558,7 +555,7 @@ describe('CheckboxGroup', () => {
       </Input>,
     );
     expect((blocks[0] as unknown as { element: unknown }).element).toMatchObject({
-      type: 'checkboxes',
+      type: 'checkbox',
       options: [{ value: 'news' }, { value: 'updates' }],
     });
   });
@@ -575,7 +572,7 @@ describe('RadioButtonGroup', () => {
       </Input>,
     );
     expect((blocks[0] as unknown as { element: unknown }).element).toMatchObject({
-      type: 'radio_buttons',
+      type: 'radio_button',
       options: [{ value: 'red' }, { value: 'blue' }],
     });
   });
@@ -656,7 +653,7 @@ describe('Actionable elements (smoke)', () => {
       </Actions>,
     );
     expect((blocks[0] as unknown as { elements: unknown[] }).elements[0]).toMatchObject({
-      type: 'timepicker',
+      type: 'time_picker',
       initialTime: '09:30',
     });
   });
@@ -677,13 +674,14 @@ describe('Actionable elements (smoke)', () => {
   it('ToggleSwitch', () => {
     const blocks = render(
       <Actions>
-        <ToggleSwitch appId={APP} blockId={BLOCK} actionId={ACTION} text="Enable notifications" checked />
+        <ToggleSwitch appId={APP} blockId={BLOCK} actionId={ACTION}>
+          <Option value="enabled">Enable notifications</Option>
+        </ToggleSwitch>
       </Actions>,
     );
     expect((blocks[0] as unknown as { elements: unknown[] }).elements[0]).toMatchObject({
       type: 'toggle_switch',
-      text: { type: 'plain_text', text: 'Enable notifications' },
-      checked: true,
+      options: [{ text: { type: 'plain_text', text: 'Enable notifications' }, value: 'enabled' }],
     });
   });
 

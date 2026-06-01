@@ -1,17 +1,8 @@
 import React from 'react';
-import type { TextObject, ConfirmationDialog, InputElementDispatchAction } from '../../types';
-import { Actions } from '../blocks';
-import { Context } from '../blocks';
-import { Input } from '../blocks';
-import { Section } from '../blocks';
-import { Button } from '../elements';
-import { ImageElement } from '../elements';
-import { PlainTextInput } from '../elements';
-import { StaticSelect } from '../elements';
-import { DatePicker } from '../elements';
-import { Overflow } from '../elements';
-import { Mrkdwn } from '../text';
-import { Plain } from '../text';
+import type { ButtonElement, InputElementDispatchAction, TextObject } from '../../types';
+import { Actions, Context, Input, Section } from '../blocks';
+import { Button, DatePicker, ImageElement, Overflow, PlainTextInput, StaticSelect } from '../elements';
+import { Mrkdwn, Plain } from '../text';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Shared Actionable props
@@ -21,7 +12,7 @@ interface ActionableProps {
   actionId?: string;
   appId?: string;
   blockId?: string;
-  confirm?: ConfirmationDialog;
+  confirm?: ButtonElement['confirm'];
   dispatchActionConfig?: readonly InputElementDispatchAction[];
 }
 
@@ -30,10 +21,9 @@ interface ActionableProps {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export interface ActionButtonProps extends ActionableProps {
-  style?: 'primary' | 'danger';
+  style?: ButtonElement['style'];
   url?: string;
   value?: string;
-  disabled?: boolean;
   /** Button label text. */
   children: React.ReactNode;
 }
@@ -62,7 +52,6 @@ export function ActionButton({
   style,
   url,
   value,
-  disabled,
   children,
 }: ActionButtonProps) {
   return (
@@ -76,7 +65,6 @@ export function ActionButton({
         style={style}
         url={url}
         value={value}
-        disabled={disabled}
       >
         {children}
       </Button>
@@ -160,6 +148,7 @@ export interface InputStaticSelectProps extends ActionableProps {
   hint?: string | TextObject;
   optional?: boolean;
   placeholder?: string | TextObject;
+  initialValue?: string;
   /** `<Option>` children define the selectable items. */
   children: React.ReactNode;
 }
@@ -193,6 +182,7 @@ export function InputStaticSelect({
   hint,
   optional,
   placeholder,
+  initialValue,
   children,
 }: InputStaticSelectProps) {
   return (
@@ -204,6 +194,7 @@ export function InputStaticSelect({
         confirm={confirm}
         dispatchActionConfig={dispatchActionConfig}
         placeholder={placeholder}
+        initialValue={initialValue}
       >
         {children}
       </StaticSelect>
@@ -380,10 +371,9 @@ export interface SectionButtonProps extends ActionableProps {
   text: string | TextObject;
   /** Array of text fields — strings are interpreted as Markdown. */
   fields?: Array<string | TextObject>;
-  style?: 'primary' | 'danger';
+  style?: ButtonElement['style'];
   url?: string;
   value?: string;
-  disabled?: boolean;
   /** Button label text. */
   children: React.ReactNode;
 }
@@ -414,7 +404,6 @@ export function SectionButton({
   style,
   url,
   value,
-  disabled,
   children,
 }: SectionButtonProps) {
   return (
@@ -428,7 +417,6 @@ export function SectionButton({
         style={style}
         url={url}
         value={value}
-        disabled={disabled}
       >
         {children}
       </Button>
